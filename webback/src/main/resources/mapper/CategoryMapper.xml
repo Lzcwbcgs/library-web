@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiazihan.webback.mapper.CategoryMapper">
+
+    <!-- 获取分类树形结构 -->
+    <select id="selectCategoryTree" resultType="com.xiazihan.webback.model.vo.CategoryVO">
+        WITH RECURSIVE category_tree AS (
+            -- 获取根节点
+            SELECT 
+                c.id,
+                c.name,
+                c.parent_id,
+                p.name as parent_name,
+                c.sort,
+                CAST(c.id AS CHAR(50)) as path
+            FROM book_category c
+            LEFT JOIN book_category p ON c.parent_id = p.id
+            WHERE c.parent_id IS NULL
+            
+            UNION ALL
+            
+            -- 递归获取子节点
+            SELECT 
+                c.id,
+                c.name,
+                c.parent_id,
+                p.name as parent_name,
+                c.sort,
+                CONCAT(ct.path, ',', c.id) as path
+            FROM book_category c
+            INNER JOIN category_tree ct ON c.parent_id = ct.id
+            LEFT JOIN book_category p ON c.parent_id = p.id
+        )
+        SELECT * FROM category_tree
+        ORDER BY path, sort
+    </select>
+
+    <!-- 获取指定分类及其所有子分类的ID -->
+    <select id="selectCategoryIdsByParentId" resultType="java.lang.Long">
+        WITH RECURSIVE category_tree AS (
+            -- 获取起始节点
+            SELECT id, parent_id
+            FROM book_category
+            WHERE id = #{parentId}
+            
+            UNION ALL
+            
+            -- 递归获取子节点
+            SELECT c.id, c.parent_id
+            FROM book_category c
+            INNER JOIN category_tree ct ON c.parent_id = ct.id
+        )
+        SELECT id FROM category_tree
+    </select>
+
+    <!-- 统计各分类下的图书数量 -->
+    <select id="selectCategoryBookCount" resultType="com.xiazihan.webback.model.vo.CategoryVO">
+        SELECT 
+            c.id,
+            c.name,
+            c.parent_id,
+            p.name as parent_name,
+            c.sort,
+            COUNT(b.id) as book_count
+        FROM book_category c
+        LEFT JOIN book_category p ON c.parent_id = p.id
+        LEFT JOIN book_info b ON c.id = b.category_id
+        GROUP BY c.id, c.name, c.parent_id, p.name, c.sort
+        ORDER BY c.sort
+    </select>
+
+</mapper>

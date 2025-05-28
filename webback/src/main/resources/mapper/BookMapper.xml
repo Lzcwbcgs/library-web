@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiazihan.webback.mapper.BookMapper">    <select id="selectBookPage" resultType="com.xiazihan.webback.model.vo.BookVO">
+        SELECT
+            b.*, 
+            c.name as category_name,
+            CASE b.status
+                WHEN 0 THEN '下架'
+                WHEN 1 THEN '正常'
+            END as status_desc
+        FROM book_info b
+        LEFT JOIN book_category c ON b.category_id = c.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    b.isbn LIKE CONCAT('%', #{keyword}, '%')
+                    OR b.title LIKE CONCAT('%', #{keyword}, '%')
+                    OR b.author LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="categoryId != null">
+                AND b.category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                AND b.status = #{status}
+            </if>
+            AND b.deleted = 0
+        </where>
+        ORDER BY b.create_time DESC
+    </select>
+
+</mapper> 

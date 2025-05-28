@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiazihan.webback.mapper.BorrowMapper">
+
+    <select id="selectBorrowingCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM borrow_record
+        WHERE user_id = #{userId}
+          AND book_id = #{bookId}
+          AND status = 0
+          AND deleted = 0
+    </select>
+
+    <select id="selectBorrowDetail" resultType="com.xiazihan.webback.model.vo.BorrowVO">
+        SELECT 
+            br.*,
+            u.username,
+            u.real_name as user_real_name,
+            b.title as book_name,
+            b.isbn as book_isbn,
+            CASE br.status
+                WHEN 0 THEN '借阅中'
+                WHEN 1 THEN '已归还'
+                WHEN 2 THEN '逾期未还'
+                WHEN 3 THEN '逾期已还'
+            END as status_desc
+        FROM borrow_record br
+        LEFT JOIN sys_user u ON br.user_id = u.id
+        LEFT JOIN book_info b ON br.book_id = b.id
+        WHERE br.id = #{id}
+          AND br.deleted = 0
+    </select>
+
+    <select id="selectBorrowPage" resultType="com.xiazihan.webback.model.vo.BorrowVO">
+        SELECT 
+            br.*,
+            u.username,
+            u.real_name as user_real_name,
+            b.title as book_name,
+            b.isbn as book_isbn,
+            CASE br.status
+                WHEN 0 THEN '借阅中'
+                WHEN 1 THEN '已归还'
+                WHEN 2 THEN '逾期未还'
+                WHEN 3 THEN '逾期已还'
+            END as status_desc
+        FROM borrow_record br
+        LEFT JOIN sys_user u ON br.user_id = u.id
+        LEFT JOIN book_info b ON br.book_id = b.id
+        <where>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (
+                    u.username LIKE CONCAT('%', #{query.keyword}, '%')
+                    OR b.title LIKE CONCAT('%', #{query.keyword}, '%')
+                    OR b.isbn LIKE CONCAT('%', #{query.keyword}, '%')
+                )
+            </if>
+            <if test="query.userId != null">
+                AND br.user_id = #{query.userId}
+            </if>
+            <if test="query.bookId != null">
+                AND br.book_id = #{query.bookId}
+            </if>
+            <if test="query.status != null">
+                AND br.status = #{query.status}
+            </if>
+            <if test="query.startTime != null">
+                AND br.create_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null">
+                AND br.create_time &lt;= #{query.endTime}
+            </if>
+            AND br.deleted = 0
+        </where>
+        ORDER BY br.create_time DESC
+    </select>
+
+    <update id="updateOverdueStatus">
+        UPDATE borrow_record
+        SET status = 2
+        WHERE status = 0
+          AND due_time &lt; #{now}
+          AND deleted = 0
+    </update>
+
+    <select id="selectBorrowStats" resultType="com.xiazihan.webback.model.vo.BorrowStatsVO">
+        SELECT
+            COUNT(*) as totalBorrowCount,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as currentBorrowCount,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as returnedCount,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as overdueCount,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as overdueReturnedCount,
+            COALESCE(SUM(fine_amount), 0) as totalFineAmount,
+            COALESCE(SUM(CASE WHEN fine_paid = 1 THEN fine_amount ELSE 0 END), 0) as paidFineAmount,
+            COALESCE(SUM(CASE WHEN fine_paid = 0 THEN fine_amount ELSE 0 END), 0) as unpaidFineAmount
+        FROM borrow_record
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            AND deleted = 0
+        </where>
+    </select>
+
+</mapper>

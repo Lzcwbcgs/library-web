@@ -280,7 +280,7 @@
   import { ref, reactive, onMounted, computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { useUserStore } from '../../stores/user'
-  import { getBookList as getBookPage, addBook, updateBook, deleteBook, getBookDetail } from '../../api/book' // Changed getBookPage to getBookList and aliased to getBookPage
+  import { getBookList as getBookPage, addBook, updateBook, deleteBook, getBookDetail } from '../../api/book'
   import { createBorrow } from '../../api/borrow'
   import { getCategoryList } from '../../api/category.js'
   import { ElMessage, ElMessageBox } from 'element-plus'
@@ -290,8 +290,11 @@
   
   // 是否具有管理员角色
   const hasAdminRole = computed(() => {
-    const roles = userStore.userInfo.roles || []
-    return roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')
+    console.log('当前用户信息:', userStore.userInfo)
+    console.log('当前用户角色:', userStore.userInfo.role)
+    const isAdmin = userStore.isAdmin()
+    console.log('是否为管理员:', isAdmin)
+    return isAdmin
   })
   
   // 查询参数
@@ -535,6 +538,12 @@
   }
   
   onMounted(() => {
+    // 如果用户信息不存在，重新获取
+    if (!userStore.userInfo.role) {
+      userStore.getUserInfo().catch(error => {
+        console.error('获取用户信息失败:', error)
+      })
+    }
     getList()
     fetchAndSetCategoryOptions()
   })

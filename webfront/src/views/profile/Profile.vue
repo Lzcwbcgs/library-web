@@ -10,7 +10,7 @@
           <h2>{{ userInfo.username }}</h2>
           <p>{{ userInfo.realName || '未设置真实姓名' }}</p>
           <p>{{ userInfo.email || '未设置邮箱' }}</p>
-          <p>角色: {{ formatRoles(userInfo.roles) }}</p>
+          <p>角色: {{ formatRole(userInfo.role) }}</p>
           <p>注册时间: {{ userInfo.createTime }}</p>
         </div>
       </div>
@@ -130,7 +130,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '../../stores/user'
 import { getProfile, updateProfile as apiUpdateProfile, changePassword } from '../../api/user'
-import { getUserBorrowStats } from '../../api/borrow'
+import { getMyBorrowStats } from '../../api/borrow'
 import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
@@ -212,7 +212,7 @@ const getUserInfo = async () => {
 // 获取用户借阅统计
 const getUserStats = async () => {
   try {
-    const res = await getUserBorrowStats()
+    const res = await getMyBorrowStats()
     userStats.value = res.data
   } catch (error) {
     console.error('获取用户借阅统计失败:', error)
@@ -257,16 +257,16 @@ const handleUpdatePassword = () => {
 }
 
 // 格式化角色
-const formatRoles = (roles) => {
-  if (!roles || roles.length === 0) return '普通用户'
+const formatRole = (role) => {
+  if (!role) return '普通用户'
   
   const roleMap = {
-    'ADMIN': '管理员',
-    'SUPER_ADMIN': '超级管理员',
-    'USER': '普通用户'
+    'ROLE_ADMIN': '管理员',
+    'ROLE_SUPER_ADMIN': '超级管理员',
+    'ROLE_READER': '普通用户'
   }
   
-  return roles.map(role => roleMap[role] || role).join(', ')
+  return roleMap[role] || role
 }
 
 onMounted(() => {
@@ -325,4 +325,4 @@ onMounted(() => {
   margin-top: 5px;
   color: #606266;
 }
-</style> 
+</style>

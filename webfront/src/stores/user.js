@@ -102,6 +102,9 @@ export const useUserStore = defineStore('user', () => {
             
             if (response.data && response.data.code === 200) {
               userInfo.value = response.data.data
+              console.log('用户信息已更新:', userInfo.value)
+              console.log('当前角色:', userInfo.value.role)
+              console.log('是否管理员:', isAdmin())
               resolve(response.data)
             } else {
               console.error('获取用户信息失败:', response.data)
@@ -114,7 +117,6 @@ export const useUserStore = defineStore('user', () => {
               if (axiosError.response.status === 401) {
                 resetToken()
               }
-              console.error('用户信息错误响应:', axiosError.response.data)
               reject(new Error(axiosError.response.data?.message || '获取用户信息失败'))
             } else {
               reject(new Error('网络错误，请稍后重试'))
@@ -129,9 +131,30 @@ export const useUserStore = defineStore('user', () => {
   }
   
   function resetToken() {
+    console.log('清除用户信息和token')
     token.value = ''
-    userInfo.value = {}
+    userInfo.value = {
+      userId: null,
+      username: '',
+      realName: '',
+      phone: '',
+      email: '',
+      avatar: '',
+      role: ''
+    }
     localStorage.removeItem('token')
+  }
+
+  // 判断是否具有特定角色
+  function hasRole(roleToCheck) {
+    const userRole = userInfo.value?.role
+    return userRole === roleToCheck
+  }
+  
+  // 判断是否为管理员（包括超级管理员）
+  function isAdmin() {
+    const userRole = userInfo.value?.role
+    return userRole === 'ROLE_ADMIN' || userRole === 'ROLE_SUPER_ADMIN'
   }
   
   return {
@@ -141,6 +164,8 @@ export const useUserStore = defineStore('user', () => {
     registerAction,
     logoutAction,
     getUserInfo,
-    resetToken
+    resetToken,
+    hasRole,
+    isAdmin
   }
 })

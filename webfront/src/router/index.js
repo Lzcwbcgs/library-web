@@ -1,32 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Layout from '../layout/Layout.vue'
 
 const routes = [
   {
-    path: '/',
-    redirect: '/dashboard'
-  },
-  {
     path: '/login',
-    name: 'Login',
     component: () => import('../views/Login.vue'),
-    meta: { requiresAuth: false }
+    meta: { title: '登录' }
   },
   {
     path: '/register',
-    name: 'Register',
     component: () => import('../views/Register.vue'),
-    meta: { requiresAuth: false }
+    meta: { title: '注册' }
   },
   {
     path: '/',
-    component: () => import('../layout/Layout.vue'),
-    meta: { requiresAuth: true },
+    component: Layout,
+    redirect: '/dashboard',
     children: [
       {
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
-        meta: { title: '首页', icon: 'HomeFilled' }
+        meta: { title: '首页', icon: 'House' }
       },
       {
         path: 'books',
@@ -41,22 +36,22 @@ const routes = [
         meta: { title: '图书详情', hidden: true }
       },
       {
-        path: 'categories',
-        name: 'Categories',
-        component: () => import('../views/category/CategoryList.vue'),
-        meta: { title: '分类管理', icon: 'Folder', roles: ['ADMIN', 'SUPER_ADMIN'] }
-      },
-      {
         path: 'borrows',
         name: 'Borrows',
         component: () => import('../views/borrow/BorrowList.vue'),
-        meta: { title: '借阅管理', icon: 'Document' }
+        meta: { title: '借阅管理', icon: 'List' }
+      },
+      {
+        path: 'categories',
+        name: 'Categories',
+        component: () => import('../views/category/CategoryList.vue'),
+        meta: { title: '分类管理', icon: 'Folder', roles: ['admin', 'super_admin'] }
       },
       {
         path: 'stats',
         name: 'Stats',
         component: () => import('../views/stats/Stats.vue'),
-        meta: { title: '统计分析', icon: 'DataAnalysis', roles: ['ADMIN', 'SUPER_ADMIN'] }
+        meta: { title: '统计分析', icon: 'DataAnalysis', roles: ['admin', 'super_admin'] }
       },
       {
         path: 'profile',
@@ -68,7 +63,8 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    component: () => import('../views/404.vue')
+    component: () => import('../views/404.vue'),
+    meta: { hidden: true }
   }
 ]
 
@@ -80,14 +76,13 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
-  
-  if (to.meta.requiresAuth && !token) {
+  if (to.path === '/login' || to.path === '/register') {
+    next()
+  } else if (!token) {
     next('/login')
-  } else if ((to.path === '/login' || to.path === '/register') && token) {
-    next('/')
   } else {
     next()
   }
 })
 
-export default router 
+export default router

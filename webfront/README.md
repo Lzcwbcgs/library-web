@@ -5,6 +5,7 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
 
 ## 前端部分（webfront）
+~~~
 webfront/
 ├── src/
 │   ├── api/                # API 接口定义
@@ -35,8 +36,10 @@ webfront/
 │   │
 │   ├── App.vue           # 根组件
 │   └── main.js           # 入口文件
+~~~
 
 ## 后端部分（webback）
+~~~
 webback/
 ├── src/main/
 │   ├── java/com/xiazihan/webback/
@@ -64,6 +67,7 @@ webback/
 │   └── resources/
 │       ├── mapper/         # MyBatis映射文件
 │       └── application.yml # 应用配置文件
+~~~
 
 ## 主要功能模块
 

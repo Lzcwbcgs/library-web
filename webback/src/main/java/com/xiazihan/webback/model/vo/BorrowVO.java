@@ -12,10 +12,10 @@ public class BorrowVO {
     private Long userId;
     private String username;
     private String userRealName;
-    
-    private Long bookId;
+      private Long bookId;
     private String bookName;
     private String bookIsbn;
+    private String author;
     
     private LocalDateTime borrowTime;
     private LocalDateTime dueTime;

@@ -121,7 +121,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { getBookDetail, updateBook } from '../../api/book'
-import { createBorrow, getBorrowPage } from '../../api/borrow'
+import { createBorrow, getBorrowList } from '../../api/borrow'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
@@ -131,8 +131,7 @@ const bookId = computed(() => route.params.id)
 
 // 是否具有管理员角色
 const hasAdminRole = computed(() => {
-  const roles = userStore.userInfo.roles || []
-  return roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')
+  return userStore.isAdmin()
 })
 
 // 图书详情
@@ -169,7 +168,7 @@ const getBorrowRecords = async () => {
   if (!hasAdminRole.value) return
   
   try {
-    const res = await getBorrowPage({
+    const res = await getBorrowList({
       bookId: bookId.value,
       pageNum: 1,
       pageSize: 10
@@ -342,4 +341,4 @@ onMounted(() => {
   line-height: 1.6;
   color: #606266;
 }
-</style> 
+</style>

@@ -54,8 +54,7 @@
       v-model="dialogVisible"
       width="500px"
       append-to-body
-    >
-      <el-form
+    >      <el-form
         ref="categoryFormRef"
         :model="categoryForm"
         :rules="categoryRules"
@@ -71,21 +70,14 @@
             :props="{ label: 'name', children: 'children' }"
             placeholder="请选择上级分类"
             clearable
+            :filter-node-method="filterNode"
           />
         </el-form-item>
         <el-form-item label="分类名称" prop="name">
-          <el-input v-model="categoryForm.name" placeholder="请输入分类名称" />
-        </el-form-item>
-        <el-form-item label="分类编码" prop="code">
-          <el-input v-model="categoryForm.code" placeholder="请输入分类编码" />
+          <el-input v-model="categoryForm.name" placeholder="请输入分类名称" maxlength="50" show-word-limit />
         </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="categoryForm.sort" :min="0" :max="999" />
-        </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input
-            v-model="categoryForm.description"
-            type="textarea"
+          <el-input-number v-model="categoryForm.sort" :min="0" :max="999" placeholder="数字越小越靠前" />
             rows="3"
             placeholder="请输入分类描述"
           />
@@ -119,15 +111,19 @@ const categoryForm = reactive({
   id: undefined,
   parentId: undefined,
   name: '',
-  code: '',
-  sort: 0,
-  description: ''
+  sort: 0
 })
 
 // 表单校验规则
 const categoryRules = {
-  name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }],
-  code: [{ required: true, message: '请输入分类编码', trigger: 'blur' }]
+  name: [
+    { required: true, message: '请输入分类名称', trigger: 'blur' },
+    { min: 2, max: 50, message: '分类名称长度在2-50个字符之间', trigger: 'blur' }
+  ],
+  sort: [
+    { required: true, message: '请输入排序值', trigger: 'blur' },
+    { type: 'number', message: '排序值必须为数字', trigger: 'blur' }
+  ]
 }
 
 // 获取分类树
@@ -164,10 +160,44 @@ const handleAddChild = (row) => {
   dialogVisible.value = true
 }
 
+// 过滤节点方法
+const filterNode = (value, data) => {
+  if (!value) return true
+  return data.name.toLowerCase().indexOf(value.toLowerCase()) !== -1
+}
+
+// 验证父分类选择
+const validateParentId = (row) => {
+  if (categoryForm.id === categoryForm.parentId) {
+    ElMessage.error('不能选择自己作为父分类')
+    categoryForm.parentId = row.parentId
+    return false
+  }
+  
+  // 检查是否选择了自己的子分类作为父分类
+  const findInChildren = (children) => {
+    if (!children) return false
+    return children.some(child => {
+      if (child.id === categoryForm.parentId) return true
+      return findInChildren(child.children)
+    })
+  }
+  
+  if (row && findInChildren(row.children)) {
+    ElMessage.error('不能选择子分类作为父分类')
+    categoryForm.parentId = row.parentId
+    return false
+  }
+  
+  return true
+}
+
 // 处理编辑分类
 const handleEdit = (row) => {
   resetForm()
   Object.assign(categoryForm, row)
+  // 保存原始父分类ID，用于验证
+  categoryForm.originalParentId = row.parentId
   dialogTitle.value = '编辑分类'
   dialogVisible.value = true
 }
@@ -194,18 +224,31 @@ const submitForm = () => {
   categoryFormRef.value.validate(async (valid) => {
     if (!valid) return
     
+    // 验证父分类选择
+    if (categoryForm.id && !validateParentId(categoryForm)) {
+      return
+    }
+    
     try {
       if (categoryForm.id) {
-        await updateCategory(categoryForm.id, categoryForm)
+        await updateCategory(categoryForm.id, {
+          name: categoryForm.name,
+          parentId: categoryForm.parentId,
+          sort: categoryForm.sort
+        })
         ElMessage.success('编辑成功')
       } else {
-        await addCategory(categoryForm)
+        await addCategory({
+          name: categoryForm.name,
+          parentId: categoryForm.parentId,
+          sort: categoryForm.sort
+        })
         ElMessage.success('添加成功')
       }
       dialogVisible.value = false
       getCategoryData()
     } catch (error) {
-      console.error('操作失败:', error)
+      ElMessage.error(error.response?.data?.message || '操作失败')
     }
   })
 }
@@ -215,9 +258,12 @@ const resetForm = () => {
   categoryForm.id = undefined
   categoryForm.parentId = undefined
   categoryForm.name = ''
-  categoryForm.code = ''
   categoryForm.sort = 0
-  categoryForm.description = ''
+  categoryForm.originalParentId = undefined
+  
+  if (categoryFormRef.value) {
+    categoryFormRef.value.resetFields()
+  }
 }
 
 onMounted(() => {
@@ -239,4 +285,4 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
 }
-</style> 
+</style>

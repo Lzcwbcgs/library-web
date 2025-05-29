@@ -10,6 +10,7 @@ import com.xiazihan.webback.model.vo.BorrowStatsVO;
 import com.xiazihan.webback.model.vo.BorrowVO;
 import com.xiazihan.webback.service.BorrowService;
 import com.xiazihan.webback.utils.SecurityUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,11 +42,17 @@ public class BorrowController {
         }
     }
 
+    @PutMapping("/{id}/return")  // 添加对PUT方法的支持
+    public ApiResult<Void> returnBookPut(@PathVariable("id") Long borrowId, HttpServletRequest request) {
+        return returnBook(borrowId, request);
+    }
+
     @PostMapping("/{id}/return")
-    public ApiResult<Void> returnBook(@PathVariable("id") Long borrowId) {
+    public ApiResult<Void> returnBook(@PathVariable("id") Long borrowId, HttpServletRequest request) {
         try {
+            log.info("还书请求, borrowId: {}, method: {}", borrowId, request.getMethod());
             Long userId = SecurityUtils.getCurrentUserId();
-            log.info("还书请求, userId: {}, borrowId: {}", userId, borrowId);
+            log.info("还书请求用户信息, userId: {}", userId);
             borrowService.returnBook(userId, borrowId);
             log.info("还书成功, userId: {}, borrowId: {}", userId, borrowId);
             return ApiResult.success();

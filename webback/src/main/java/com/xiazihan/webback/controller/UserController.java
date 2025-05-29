@@ -1,8 +1,9 @@
 package com.xiazihan.webback.controller;
 
 import com.xiazihan.webback.common.api.ApiResult;
+import com.xiazihan.webback.model.entity.SysUser;
 import com.xiazihan.webback.model.vo.UserProfileVO;
-import com.xiazihan.webback.service.UserService; // 假设你有一个 UserService
+import com.xiazihan.webback.service.UserService;
 import com.xiazihan.webback.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,24 +18,34 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class UserController {
 
-    // private final UserService userService; // 如果 UserProfileVO 需要从数据库等获取，则注入 UserService
-
+    private final UserService userService;
+    
     @Operation(summary = "获取用户个人信息")
     @GetMapping("/profile")
     public ApiResult<UserProfileVO> getProfile() {
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        String currentUsername = SecurityUtils.getCurrentUsername();
-        
-        log.info("获取用户 {} ({}) 的个人信息", currentUserId, currentUsername);
-        
-        UserProfileVO userProfile = new UserProfileVO();
-        userProfile.setUserId(currentUserId);
-        userProfile.setUsername(currentUsername);
-        
-        // 如果你有更详细的用户信息服务，可以替换下面的逻辑
-        // userProfile = userService.getUserProfile(currentUserId);
-        
-        return ApiResult.success(userProfile);
+        try {
+            String currentUsername = SecurityUtils.getCurrentUsername();
+            log.info("获取用户个人信息, username: {}", currentUsername);
+            
+            SysUser user = userService.getByUsername(currentUsername);
+            if (user == null) {
+                return ApiResult.failed("用户不存在");
+            }
+            
+            UserProfileVO userProfile = new UserProfileVO();
+            userProfile.setUserId(user.getId());
+            userProfile.setUsername(user.getUsername());
+            userProfile.setRealName(user.getRealName());
+            userProfile.setPhone(user.getPhone());
+            userProfile.setEmail(user.getEmail());
+            userProfile.setAvatar(user.getAvatar());
+            userProfile.setRole(user.getRole());
+            
+            return ApiResult.success(userProfile);
+        } catch (Exception e) {
+            log.error("获取用户个人信息失败", e);
+            return ApiResult.failed("获取用户信息失败");
+        }
     }
 
     // 可以在这里添加其他用户相关的端点，例如：

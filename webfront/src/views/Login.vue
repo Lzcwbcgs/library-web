@@ -94,12 +94,15 @@ const handleLogin = () => {
       const response = await login(loginForm)
       console.log('登录响应:', response)
       
-      // 保存token
+      // 保存token并获取用户信息
       if (response && response.code === 200 && response.data && response.data.token) {
         localStorage.setItem('token', response.data.token)
+        
         // 更新用户store
         try {
           await userStore.getUserInfo()
+          console.log('登录成功，当前用户信息:', userStore.userInfo)
+          console.log('是否为管理员:', userStore.isAdmin())
           ElMessage.success('登录成功')
           router.push('/')
         } catch (userInfoError) {

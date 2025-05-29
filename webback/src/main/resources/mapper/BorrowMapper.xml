@@ -9,15 +9,14 @@
           AND book_id = #{bookId}
           AND status = 0
           AND deleted = 0
-    </select>
-
-    <select id="selectBorrowDetail" resultType="com.xiazihan.webback.model.vo.BorrowVO">
+    </select>    <select id="selectBorrowDetail" resultType="com.xiazihan.webback.model.vo.BorrowVO">
         SELECT 
             br.*,
             u.username,
             u.real_name as user_real_name,
             b.title as book_name,
             b.isbn as book_isbn,
+            b.author as author,
             CASE br.status
                 WHEN 0 THEN '借阅中'
                 WHEN 1 THEN '已归还'
@@ -29,15 +28,14 @@
         LEFT JOIN book_info b ON br.book_id = b.id
         WHERE br.id = #{id}
           AND br.deleted = 0
-    </select>
-
-    <select id="selectBorrowPage" resultType="com.xiazihan.webback.model.vo.BorrowVO">
+    </select>    <select id="selectBorrowPage" resultType="com.xiazihan.webback.model.vo.BorrowVO">
         SELECT 
             br.*,
             u.username,
             u.real_name as user_real_name,
             b.title as book_name,
             b.isbn as book_isbn,
+            b.author as author,
             CASE br.status
                 WHEN 0 THEN '借阅中'
                 WHEN 1 THEN '已归还'

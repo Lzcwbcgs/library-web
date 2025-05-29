@@ -33,7 +33,12 @@ export function renewBorrow(id) {
 export function returnBook(id) {
   return request({
     url: `/borrows/${id}/return`,
-    method: 'put'
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    data: {} // 显式添加空的请求体，确保请求方法不会被改变
   })
 }
 
@@ -56,4 +61,4 @@ export function getMyBorrowStats() {
     url: '/borrows/stats/my',
     method: 'get'
   })
-} 
+}
